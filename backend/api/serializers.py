@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
@@ -46,7 +47,7 @@ class SetPasswordSerializer(serializers.Serializer):
         new_password = data.get('new_password')
         try:
             validate_password(new_password)
-        except Exception as e:
+        except ValidationError as e:
             raise serializers.ValidationError(
                 {'new_password': list(e)})
         return data
