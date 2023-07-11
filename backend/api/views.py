@@ -10,20 +10,27 @@ from rest_framework.response import Response
 from .filters import RecipeFilter
 from .pagination import CustomPaginator
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializers import (IngredientSerializer,
-                          RecipeCreateSerializer,
-                          RecipeReadSerializer,
-                          RecipeSerializer,
-                          SetPasswordSerializer,
-                          SubscribeAuthorSerializer,
-                          SubscriptionsSerializer,
-                          TagSerializer,
-                          UserCreateSerializer,
-                          UserReadSerializer
-                          )
+from .serializers import (
+    IngredientSerializer,
+    RecipeCreateSerializer,
+    RecipeReadSerializer,
+    RecipeSerializer,
+    SetPasswordSerializer,
+    SubscribeAuthorSerializer,
+    SubscriptionsSerializer,
+    TagSerializer,
+    UserCreateSerializer,
+    UserReadSerializer
+)
 from .utils import CustomListRetrieveViewSet
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag
+)
 from users.models import Subscribe, User
 
 
@@ -117,7 +124,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             request,
             recipe,
             serializer_class,
-            related_field):
+            related_field
+    ) -> Response:
         if request.method == 'POST':
             if not related_field.filter(
                     user=request.user, recipe=recipe).exists():
@@ -144,7 +152,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             request,
             recipe,
             serializer_class=RecipeSerializer,
-            model_objects=Favorite.objects)
+            model_objects=Favorite.objects
+        )
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(IsAuthenticated,))
@@ -156,13 +165,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        ingredients = (
-            RecipeIngredient.objects
-            .filter(recipe__shopping_recipe__user=request.user)
-            .values('ingredient')
-            .annotate(total_amount=Sum('amount'))
-            .values_list('ingredient__name', 'total_amount',
-                         'ingredient__measurement_unit')
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_recipe__user=request.user,
+        ).values(
+            'ingredient',
+        ).annotate(
+            total_amount=Sum('amount')
+        ).values_list(
+            'ingredient__name',
+            'total_amount',
+            'ingredient__measurement_unit',
         )
 
         wishlist = [f'{item[0]} - {item[2]} {item[1]}' for item in ingredients]
