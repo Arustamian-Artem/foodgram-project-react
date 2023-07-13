@@ -144,13 +144,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             {'detail': 'Успешно удалено'},
             status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete', 'get'],
+    @action(detail=True, methods=['post', 'delete'],
             permission_classes=(IsAuthenticated,))
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         return self.toggle_favorite_or_cart(
-            request,
-            recipe,
+            request=request,
+            recipe=recipe,
             serializer_class=RecipeSerializer,
             model_objects=Favorite.objects
         )
