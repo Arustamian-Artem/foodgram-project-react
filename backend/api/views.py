@@ -125,7 +125,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe,
             serializer_class,
             related_field
-    ) -> Response:
+    ) ->:
         if request.method == 'POST':
             if not related_field.filter(
                     user=request.user, recipe=recipe).exists():
