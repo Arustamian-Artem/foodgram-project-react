@@ -44,3 +44,4 @@ sudo apt install docker docker-compose
 
 Проект работа на foodgramsite.hopto.org
 Админ логин:admin@admin.ru, пароль:admin
+
