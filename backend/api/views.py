@@ -120,7 +120,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeCreateSerializer
 
     def toggle_favorite_or_cart(
-            self, request, recipe, serializer_class, related_field):
+            self,
+            request,
+            recipe,
+            serializer_class,
+            related_field
+    ) -> Response:
         if request.method == 'POST':
             if not related_field.filter(
                     user=request.user, recipe=recipe).exists():
