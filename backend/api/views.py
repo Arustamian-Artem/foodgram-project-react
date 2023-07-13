@@ -149,7 +149,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         return self.toggle_favorite_or_cart(
-            request, recipe, RecipeSerializer, Favorite.objects)
+            request,
+            recipe,
+            RecipeSerializer,
+            Favorite.objects
+        )
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(IsAuthenticated,))
