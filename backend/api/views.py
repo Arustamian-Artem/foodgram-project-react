@@ -22,6 +22,7 @@ from .serializers import (
     UserCreateSerializer,
     UserReadSerializer
 )
+from .utils import CustomListRetrieveViewSet
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -93,23 +94,17 @@ class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                         status=status.HTTP_204_NO_CONTENT)
 
 
-class IngredientViewSet(mixins.ListModelMixin,
-                        mixins.RetrieveModelMixin,
-                        viewsets.GenericViewSet):
+class IngredientViewSet(CustomListRetrieveViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
     permission_classes = (AllowAny,)
 
 
-class TagViewSet(mixins.ListModelMixin,
-                 mixins.RetrieveModelMixin,
-                 viewsets.GenericViewSet):
+class TagViewSet(CustomListRetrieveViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
