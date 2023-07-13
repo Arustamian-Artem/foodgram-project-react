@@ -10,27 +10,13 @@ from rest_framework.response import Response
 from .filters import RecipeFilter
 from .pagination import CustomPaginator
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializers import (
-    IngredientSerializer,
-    RecipeCreateSerializer,
-    RecipeReadSerializer,
-    RecipeSerializer,
-    SetPasswordSerializer,
-    SubscribeAuthorSerializer,
-    SubscriptionsSerializer,
-    TagSerializer,
-    UserCreateSerializer,
-    UserReadSerializer
-)
-from .utils import CustomListRetrieveViewSet
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag
-)
+from .serializers import (IngredientSerializer, RecipeCreateSerializer,
+                          RecipeReadSerializer, RecipeSerializer,
+                          SetPasswordSerializer, SubscribeAuthorSerializer,
+                          SubscriptionsSerializer, TagSerializer,
+                          UserCreateSerializer, UserReadSerializer)
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.models import Subscribe, User
 
 
@@ -87,24 +73,30 @@ class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED)
             return Response(
-                "Подписка уже существует", status=status.HTTP_200_OK)
+                "Subscribe already exists", status=status.HTTP_200_OK)
 
         get_object_or_404(Subscribe, user=request.user, author=author).delete()
         return Response({'detail': 'Успешная отписка'},
                         status=status.HTTP_204_NO_CONTENT)
 
 
-class IngredientViewSet(CustomListRetrieveViewSet):
+class IngredientViewSet(mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    pagination_class = None
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
     permission_classes = (AllowAny,)
 
 
-class TagViewSet(CustomListRetrieveViewSet):
+class TagViewSet(mixins.ListModelMixin,
+                 mixins.RetrieveModelMixin,
+                 viewsets.GenericViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -120,12 +112,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeCreateSerializer
 
     def toggle_favorite_or_cart(
-            self,
-            request,
-            recipe,
-            serializer_class,
-            related_field
-    ):
+            self, request, recipe, serializer_class, related_field):
         if request.method == 'POST':
             if not related_field.filter(
                     user=request.user, recipe=recipe).exists():
@@ -141,7 +128,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         related_field.filter(user=request.user, recipe=recipe).delete()
         return Response(
-            {'detail': 'Успешно удалено'},
+            {'detail': 'Успешное удаление'},
             status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'],
@@ -149,11 +136,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         return self.toggle_favorite_or_cart(
-            request=request,
-            recipe=recipe,
-            serializer_class=RecipeSerializer,
-            model_objects=Favorite.objects
-        )
+            request, recipe, RecipeSerializer, Favorite.objects)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(IsAuthenticated,))
@@ -165,19 +148,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_recipe__user=request.user,
-        ).values(
-            'ingredient',
-        ).annotate(
-            total_amount=Sum('amount')
-        ).values_list(
-            'ingredient__name',
-            'total_amount',
-            'ingredient__measurement_unit',
+        ingredients = (
+            RecipeIngredient.objects
+            .filter(recipe__shopping_recipe__user=request.user)
+            .values('ingredient')
+            .annotate(total_amount=Sum('amount'))
+            .values_list('ingredient__name', 'total_amount',
+                         'ingredient__measurement_unit')
         )
 
-        wishlist = [f'{item[0]} - {item[2]} {item[1]}' for item in ingredients]
+        wishlist = []
+        for item in ingredients:
+            wishlist.append(
+                f'{item[0]} - {item[2]} {item[1]}'
+            )
 
         wishlist = '\n'.join(wishlist)
         response = HttpResponse(wishlist, 'Content-Type: text/plain')
